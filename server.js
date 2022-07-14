@@ -1,18 +1,11 @@
 var express = require("express");
 var cors = require("cors");
 var bodyParser = require("body-parser");
-const mysql = require("mysql2");
+const mysql = require("mysql2/promise");
 const { request } = require("express");
 const PORT = process.env.PORT || 5000;
 
-const connection = mysql.createConnection({
-  host: "hwr4wkxs079mtb19.cbetxkdyhwsb.us-east-1.rds.amazonaws.com",
-  port: "3306",
-  user: "ejjy2csd90kkpx4i",
-  password: "fra9wec8awbbqlv3",
-  database: "gwvk3znlp5t7551i",
-});
-
+var connection = {};
 var app = express();
 var jwt = require("jsonwebtoken");
 var jsonParser = bodyParser.json();
@@ -21,6 +14,17 @@ const bcrypt = require("bcrypt");
 const saltRounds = 10;
 app.use(cors());
 app.use(express.json());
+
+const create_connection = async () => {
+  return await mysql.createConnection({
+    host: "lcpbq9az4jklobvq.cbetxkdyhwsb.us-east-1.rds.amazonaws.com",
+    port: "3306",
+    user: "wwz7nngvxb09lek6",
+    password: "bqnch71ghg5ivpe3",
+    database: "rjz14gilfzn22wr9",
+  });
+};
+
 const authenticateJWT = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -68,7 +72,6 @@ app.post("/auth", authenticateJWT, (req, res, next) => {
     [user_id],
     function (err, results) {
       res.json(results[0]);
-      res.json(err);
     }
   );
 });
@@ -84,51 +87,121 @@ app.post("/auth/users", authenticateJWT, (req, res) => {
   );
 });
 
-app.post("/register", jsonParser, (req, res, next) => {
-  connection.query(
-    'SELECT email FROM users WHERE email ="' + req.body.email + '"',
-    function (err, result) {
-      console.log(result);
-      if (err) throw err;
-      if (result.length > 0) {
-        res.json({
-          status: "registered",
-          message: "This email has already been registered.",
-        });
-      }
-
-      //You will get an array. if no users found it will return.
-      else {
-        //Then do your task (run insert query)
-        bcrypt.hash(req.body.password, saltRounds, function (hash) {
-          // Store hash in your password DB.
-          connection
-            .query(
-              "INSERT INTO `users`(`fname`, `lname`, `email`, `password`, `user_profilepic`, `contact`) VALUES (?, ?, ?, ?, ?, ?)",
-              [
-                req.body.fname,
-                req.body.lname,
-                req.body.email,
-                hash,
-                req.body.user_profilepic,
-                req.body.contact,
-              ]
-            )
-            .then((results) => {
-              results.status = "ok";
-              results.message =
-                "User with user id : " +
-                results.insertId +
-                " is registered successfully.";
-              res.json(results);
-              if (err) {
-                res.json({ status: "error", message: err });
-              }
-            });
-        });
-      }
-    }
+app.post("/register", jsonParser, async (req, res, next) => {
+  let connection = await create_connection();
+  let [rows] = await connection.execute(
+    'SELECT email FROM users WHERE email ="' + req.body.email + '"'
   );
+  if (rows.length > 0) {
+    return res.json({
+      status: "registered",
+      message: "This email has already been registered.",
+      rows,
+    });
+  }
+
+  let hash_password = await bcrypt.hash(req.body.password, saltRounds);
+  // insert new users to database
+
+  let [register, err] = await connection.query(
+    "INSERT INTO `users`(`fname`, `lname`, `email`, `password`, `avatar`, `contact`) VALUES (?, ?, ?, ?, ?, ?)",
+    [
+      req.body.fname,
+      req.body.lname,
+      req.body.email,
+      hash_password,
+      req.body.avatar,
+      req.body.contact,
+    ]
+  );
+
+  if (err) {
+    return res.json({
+      status: "errror",
+      message: "some error occurred : ",
+      err,
+    });
+  }
+
+  return res.json({
+    status: "ok",
+    message:
+      "User with user id : " +
+      register.insertId +
+      " is registered successfully.",
+    register,
+  });
+
+  // connection
+  //   .query(
+  //     "INSERT INTO `users`(`fname`, `lname`, `email`, `password`, `avatar`, `contact`) VALUES (?, ?, ?, ?, ?, ?)",
+  //     [
+  //       req.body.fname,
+  //       req.body.lname,
+  //       req.body.email,
+  //       hash_password,
+  //       req.body.avatar,
+  //       req.body.contact,
+  //     ]
+  //   )
+  //   .then((results) => {
+  //     results.status = "ok";
+  //     results.message =
+  //       "User with user id : " +
+  //       results.insertId +
+  //       " is registered successfully.";
+  //     res.json(results);
+  //     if (err) {
+  //       res.json({ status: "error", message: err });
+  //     }
+  //   });
+
+  // connection
+  //   .promise()
+  //   .query(
+  //     'SELECT email FROM users WHERE email ="' + req.query.email + '"',
+  //     function (err, result) {
+  //       console.log(result);
+  //       if (err) throw err;
+  //       if (result.length > 0) {
+  //         res.json({
+  //           status: "registered",
+  //           message: "This email has already been registered.",
+  //         });
+  //       }
+
+  //       //You will get an array. if no users found it will return.
+  //       else {
+  //         //Then do your task (run insert query)
+  //         bcrypt.hash(req.body.password, saltRounds, function (hash) {
+  //           // Store hash in your password DB.
+  //           connection
+  //             .query(
+  //               "INSERT INTO `users`(`fname`, `lname`, `email`, `password`, `avatar`, `contact`) VALUES (?, ?, ?, ?, ?, ?)",
+  //               [
+  //                 req.body.fname,
+  //                 req.body.lname,
+  //                 req.body.email,
+  //                 hash,
+  //                 req.body.avatar,
+  //                 req.body.contact,
+  //               ]
+  //             )
+  //             .then((results) => {
+  //               results.status = "ok";
+  //               results.message =
+  //                 "User with user id : " +
+  //                 results.insertId +
+  //                 " is registered successfully.";
+  //               res.json(results);
+  //               if (err) {
+  //                 res.json({ status: "error", message: err });
+  //               }
+  //             });
+  //         });
+  //       }
+  //     }
+  //   );
 });
 
 app.post("/login", jsonParser, function (req, res, next) {
@@ -188,36 +261,39 @@ app.get("/users/:user_id", function (req, res, next) {
   );
 });
 
-app.post("/create", function (req, res, next) {
-  console.log(req.body);
-  connection.query(
-    "INSERT INTO `users`(`fname`, `lname`, `email`, `password`, `user_profilepic`, `contact`) VALUES (?, ?, ?, ?, ?, ?)",
+app.post("/create", async (req, res, next) => {
+  let connection = await create_connection();
+  let [results] = await connection.query(
+    "INSERT INTO `users`(`fname`, `lname`, `email`, `password`, `avatar`, `contact`) VALUES (?, ?, ?, ?, ?, ?)",
     [
       req.body.fname,
       req.body.lname,
       req.body.email,
       req.body.password,
-      req.body.user_profilepic,
+      req.body.avatar,
       req.body.contact,
-    ],
-    function (err, results) {
-      results.status = "ok";
-      results.message =
-        "User with USER_ID : " + results.insertId + " is created successfully.";
-      res.json(results);
-    }
+    ]
   );
+
+  console.log(results);
+
+  return res.json({
+    status: "ok",
+    message:
+      "User with USER_ID : " + results.insertId + " is created successfully.",
+    results,
+  });
 });
 
 app.put("/update", function (req, res, next) {
   connection.query(
-    "UPDATE `users` SET `fname`= ?, `lname`= ?, `email`= ?, `password`= ?, `user_profilepic`= ?, `contact`= ? WHERE user_id = ?",
+    "UPDATE `users` SET `fname`= ?, `lname`= ?, `email`= ?, `password`= ?, `avatar`= ?, `contact`= ? WHERE user_id = ?",
     [
       req.body.fname,
       req.body.lname,
       req.body.email,
       req.body.password,
-      req.body.user_profilepic,
+      req.body.avatar,
       req.body.contact,
       req.body.user_id,
     ],
@@ -245,6 +321,6 @@ app.delete("/delete", function (req, res, next) {
   );
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log("CORS-enabled listening on port " + PORT);
 });
