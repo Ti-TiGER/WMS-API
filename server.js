@@ -55,26 +55,26 @@ const authenticateJWT = (req, res, next) => {
 
 const { body, validationResult } = require("express-validator");
 
-// app.post("/auth", function (req, res, next) {
-//   try {
-//     const token = req.headers.authorization.split(" ")[1];
-//     var decoded = jwt.verify(token, secret);
-//     res.json({ status: "Verified", decoded });
-//   } catch (err) {
-//     res.json({ status: "error", message: err.message });
-//   }
-// });
-
-app.post("/auth", authenticateJWT, (req, res, next) => {
-  const user_id = req.users.user_id;
-  connection.query(
-    "SELECT * FROM `users` WHERE `user_id` = ?",
-    [user_id],
-    function (err, results) {
-      res.json(results[0]);
-    }
-  );
+app.post("/auth", function (req, res, next) {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    var decoded = jwt.verify(token, secret);
+    res.json({ status: "Verified", decoded });
+  } catch (err) {
+    res.json({ status: "error", message: err.message });
+  }
 });
+
+// app.post("/auth", authenticateJWT, (req, res, next) => {
+//   const user_id = req.users.user_id;
+//   connection.query(
+//     "SELECT * FROM `users` WHERE `user_id` = ?",
+//     [user_id],
+//     function (err, results) {
+//       res.json(results[0]);
+//     }
+//   );
+// });
 
 app.post("/auth/users", authenticateJWT, (req, res) => {
   const email = req.users.email;
@@ -103,7 +103,7 @@ app.post("/register", jsonParser, async (req, res, next) => {
   let hash_password = await bcrypt.hash(req.body.password, saltRounds);
   // insert new users to database
 
-  let [register, err] = await connection.query(
+  let [register] = await connection.query(
     "INSERT INTO `users`(`fname`, `lname`, `email`, `password`, `avatar`, `contact`) VALUES (?, ?, ?, ?, ?, ?)",
     [
       req.body.fname,
@@ -114,14 +114,6 @@ app.post("/register", jsonParser, async (req, res, next) => {
       req.body.contact,
     ]
   );
-
-  if (err) {
-    return res.json({
-      status: "errror",
-      message: "some error occurred : ",
-      err,
-    });
-  }
 
   return res.json({
     status: "ok",
@@ -149,32 +141,18 @@ app.post("/login", jsonParser, async function (req, res, next) {
     var token = jwt.sign({ email: users[0].email }, secret, {
       expiresIn: "1h",
     });
-    res.status(200).json({
+    res.json({
       status: "success",
       message: "Login successfully",
       token,
       user: users[0],
     });
   } else {
-    res.send("wrong password");
+    res.json({
+      status: "Invalid password",
+      message: "Wrong password",
+    });
   }
-
-  // if (isLogin) {
-  //   var token = jwt.sign({ email: users[0].email }, secret, {
-  //     expiresIn: "1h",
-  //   });
-  //   res.status(200).json({
-  //     status: "success",
-  //     message: "Login successfully",
-  //     token,
-  //     user: users[0],
-  //   });
-  // } else {
-  //   res.status(400).json({
-  //     status: "error",
-  //     message: "Missing email or password",
-  //   });
-  // }
 });
 
 app.get("/users", async function (req, res, next) {
