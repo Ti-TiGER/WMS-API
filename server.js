@@ -131,134 +131,66 @@ app.post("/register", jsonParser, async (req, res, next) => {
       " is registered successfully.",
     register,
   });
+});
 
-  // connection
-  //   .query(
-  //     "INSERT INTO `users`(`fname`, `lname`, `email`, `password`, `avatar`, `contact`) VALUES (?, ?, ?, ?, ?, ?)",
-  //     [
-  //       req.body.fname,
-  //       req.body.lname,
-  //       req.body.email,
-  //       hash_password,
-  //       req.body.avatar,
-  //       req.body.contact,
-  //     ]
-  //   )
-  //   .then((results) => {
-  //     results.status = "ok";
-  //     results.message =
-  //       "User with user id : " +
-  //       results.insertId +
-  //       " is registered successfully.";
-  //     res.json(results);
-  //     if (err) {
-  //       res.json({ status: "error", message: err });
-  //     }
+app.post("/login", jsonParser, async function (req, res, next) {
+  let connection = await create_connection();
+  let [users] = await connection.query("SELECT * FROM users WHERE email=?", [
+    req.body.email,
+  ]);
+
+  if (users.length == 0) {
+    res.json({ status: "error", message: "no email found" });
+    return;
+  }
+
+  const match = await bcrypt.compare(req.body.password, users[0].password);
+  if (match) {
+    var token = jwt.sign({ email: users[0].email }, secret, {
+      expiresIn: "1h",
+    });
+    res.status(200).json({
+      status: "success",
+      message: "Login successfully",
+      token,
+      user: users[0],
+    });
+  } else {
+    res.send("wrong password");
+  }
+
+  // if (isLogin) {
+  //   var token = jwt.sign({ email: users[0].email }, secret, {
+  //     expiresIn: "1h",
   //   });
-
-  // connection
-  //   .promise()
-  //   .query(
-  //     'SELECT email FROM users WHERE email ="' + req.query.email + '"',
-  //     function (err, result) {
-  //       console.log(result);
-  //       if (err) throw err;
-  //       if (result.length > 0) {
-  //         res.json({
-  //           status: "registered",
-  //           message: "This email has already been registered.",
-  //         });
-  //       }
-
-  //       //You will get an array. if no users found it will return.
-  //       else {
-  //         //Then do your task (run insert query)
-  //         bcrypt.hash(req.body.password, saltRounds, function (hash) {
-  //           // Store hash in your password DB.
-  //           connection
-  //             .query(
-  //               "INSERT INTO `users`(`fname`, `lname`, `email`, `password`, `avatar`, `contact`) VALUES (?, ?, ?, ?, ?, ?)",
-  //               [
-  //                 req.body.fname,
-  //                 req.body.lname,
-  //                 req.body.email,
-  //                 hash,
-  //                 req.body.avatar,
-  //                 req.body.contact,
-  //               ]
-  //             )
-  //             .then((results) => {
-  //               results.status = "ok";
-  //               results.message =
-  //                 "User with user id : " +
-  //                 results.insertId +
-  //                 " is registered successfully.";
-  //               res.json(results);
-  //               if (err) {
-  //                 res.json({ status: "error", message: err });
-  //               }
-  //             });
-  //         });
-  //       }
-  //     }
-  //   );
+  //   res.status(200).json({
+  //     status: "success",
+  //     message: "Login successfully",
+  //     token,
+  //     user: users[0],
+  //   });
+  // } else {
+  //   res.status(400).json({
+  //     status: "error",
+  //     message: "Missing email or password",
+  //   });
+  // }
 });
 
-app.post("/login", jsonParser, function (req, res, next) {
-  connection.query(
-    "SELECT * FROM users WHERE email=?",
-    [req.body.email],
-    function (err, users) {
-      if (err) {
-        res.json({ status: "error", message: err });
-        return;
-      }
-      if (users.length == 0) {
-        res.json({ status: "error", message: "no email found" });
-        return;
-      }
-      bcrypt.compare(
-        req.body.password,
-        users[0].password,
-        function (err, isLogin) {
-          if (isLogin) {
-            var token = jwt.sign({ email: users[0].email }, secret, {
-              expiresIn: "1h",
-            });
-            res.status(200).json({
-              status: "success",
-              message: "Login successfully",
-              token,
-              user: users[0],
-            });
-          } else {
-            res.status(400).json({
-              status: "error",
-              message: "Missing email or password",
-            });
-          }
-        }
-      );
-    }
-  );
+app.get("/users", async function (req, res, next) {
+  let connection = await create_connection();
+  let [rows] = await connection.query("SELECT * FROM `users`");
+  return res.json(rows);
 });
 
-app.get("/users", function (req, res, next) {
-  connection.query("SELECT * FROM `users`", function (err, results, fields) {
-    res.json(results);
-  });
-});
-
-app.get("/users/:user_id", function (req, res, next) {
+app.get("/users/:user_id", async function (req, res, next) {
+  let connection = await create_connection();
   const user_id = req.params.user_id;
-  connection.query(
+  let [rows] = await connection.query(
     "SELECT * FROM `users` WHERE `user_id` = ?",
-    [user_id],
-    function (err, results) {
-      res.json(results[0]);
-      // res.json(err);
-    }
+    [user_id]
   );
+  return res.json(rows[0]);
 });
 
 app.post("/create", async (req, res, next) => {
@@ -285,8 +217,9 @@ app.post("/create", async (req, res, next) => {
   });
 });
 
-app.put("/update", function (req, res, next) {
-  connection.query(
+app.put("/update", async function (req, res, next) {
+  let connection = await create_connection();
+  let [rows, err] = await connection.query(
     "UPDATE `users` SET `fname`= ?, `lname`= ?, `email`= ?, `password`= ?, `avatar`= ?, `contact`= ? WHERE user_id = ?",
     [
       req.body.fname,
@@ -296,29 +229,34 @@ app.put("/update", function (req, res, next) {
       req.body.avatar,
       req.body.contact,
       req.body.user_id,
-    ],
-    function (err, results) {
-      results.status = "ok";
-      results.user_id = req.body.user_id;
-      results.message =
-        "User with USER_ID : " + results.user_id + " is updated successfully.";
-      res.json(results);
-    }
+    ]
   );
+  if (err) {
+    res.json({ error: err });
+  }
+  const id = req.body.user_id;
+  return res.json({
+    status: "ok",
+    message: "User with USER_ID : " + id + " is updated successfully.",
+    rows,
+  });
 });
 
-app.delete("/delete", function (req, res, next) {
-  connection.query(
+app.delete("/delete", async function (req, res, next) {
+  let connection = await create_connection();
+  let [rows, err] = await connection.query(
     "DELETE FROM `users` WHERE user_id = ?",
-    [req.body.user_id],
-    function (err, results) {
-      results.status = "ok";
-      results.user_id = req.body.user_id;
-      results.message =
-        "User with USER_ID : " + results.user_id + " is deleted successfully.";
-      res.json(results);
-    }
+    [req.body.user_id]
   );
+  if (err) {
+    res.json({ error: err });
+  }
+  const id = req.body.user_id;
+  return res.json({
+    status: "ok",
+    message: "User with USER_ID : " + id + " is deleted successfully.",
+    rows,
+  });
 });
 
 app.listen(PORT, async () => {
