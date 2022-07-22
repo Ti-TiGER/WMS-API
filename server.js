@@ -155,12 +155,12 @@ app.post("/login", jsonParser, async function (req, res, next) {
   }
 });
 
+// CRUD user in database
 app.get("/users", async function (req, res, next) {
   let connection = await create_connection();
   let [rows] = await connection.query("SELECT * FROM `users`");
   return res.json(rows);
 });
-
 app.get("/users/:user_id", async function (req, res, next) {
   let connection = await create_connection();
   const user_id = req.params.user_id;
@@ -170,7 +170,6 @@ app.get("/users/:user_id", async function (req, res, next) {
   );
   return res.json(rows[0]);
 });
-
 app.post("/create", async (req, res, next) => {
   let connection = await create_connection();
   let [results] = await connection.query(
@@ -184,9 +183,7 @@ app.post("/create", async (req, res, next) => {
       req.body.contact,
     ]
   );
-
   console.log(results);
-
   return res.json({
     status: "ok",
     message:
@@ -194,7 +191,6 @@ app.post("/create", async (req, res, next) => {
     results,
   });
 });
-
 app.put("/update", async function (req, res, next) {
   let connection = await create_connection();
   let [rows, err] = await connection.query(
@@ -219,7 +215,6 @@ app.put("/update", async function (req, res, next) {
     rows,
   });
 });
-
 app.delete("/delete", async function (req, res, next) {
   let connection = await create_connection();
   let [rows, err] = await connection.query(
@@ -233,6 +228,79 @@ app.delete("/delete", async function (req, res, next) {
   return res.json({
     status: "ok",
     message: "User with USER_ID : " + id + " is deleted successfully.",
+    rows,
+  });
+});
+
+// CRUD Products
+app.get("/pd", async function (req, res, next) {
+  let connection = await create_connection();
+  let [rows] = await connection.query("SELECT * FROM `products`");
+  return res.json(rows);
+});
+app.get("/pd/:product_id", async function (req, res, next) {
+  let connection = await create_connection();
+  const product_id = req.params.product_id;
+  let [rows] = await connection.query(
+    "SELECT * FROM `products` WHERE `product_id` = ?",
+    [product_id]
+  );
+  return res.json(rows[0]);
+});
+app.post("/createpd", async (req, res, next) => {
+  let connection = await create_connection();
+  let [results] = await connection.query(
+    "INSERT INTO `products`(`product_name`, `description`, `product_picture`, `Quantity`) VALUES (?, ?, ?, ?)",
+    [
+      req.body.product_name,
+      req.body.description,
+      req.body.product_picture,
+      req.body.Quantity,
+    ]
+  );
+  console.log(results);
+  return res.json({
+    status: "ok",
+    message:
+      "Product with id : " + results.insertId + " is created successfully.",
+    results,
+  });
+});
+app.put("/updatepd", async function (req, res, next) {
+  let connection = await create_connection();
+  let [rows, err] = await connection.query(
+    "UPDATE `products` SET `product_name`= ?, `description`= ?, `product_picture`= ?, `Quantity`= ? WHERE product_id = ?",
+    [
+      req.body.product_name,
+      req.body.description,
+      req.body.product_picture,
+      req.body.Quantity,
+      req.body.product_id,
+    ]
+  );
+  if (err) {
+    res.json({ error: err });
+  }
+  const id = req.body.product_id;
+  return res.json({
+    status: "ok",
+    message: "Product with product_id : " + id + " is updated successfully.",
+    rows,
+  });
+});
+app.delete("/deletepd", async function (req, res, next) {
+  let connection = await create_connection();
+  let [rows, err] = await connection.query(
+    "DELETE FROM `products` WHERE product_id = ?",
+    [req.body.product_id]
+  );
+  if (err) {
+    res.json({ error: err });
+  }
+  const id = req.body.product_id;
+  return res.json({
+    status: "ok",
+    message: "Product with product_id : " + id + " is deleted successfully.",
     rows,
   });
 });
