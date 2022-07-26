@@ -306,11 +306,14 @@ app.delete("/deletepd", async function (req, res, next) {
 });
 
 // CRUD Category
+// READ All Category
 app.get("/category", async function (req, res, next) {
   let connection = await create_connection();
   let [rows] = await connection.query("SELECT * FROM `categories`");
   return res.json(rows);
 });
+
+// READ BY ID
 app.get("/category/:category_id", async function (req, res, next) {
   let connection = await create_connection();
   const category_id = req.params.category_id;
@@ -320,6 +323,8 @@ app.get("/category/:category_id", async function (req, res, next) {
   );
   return res.json(rows[0]);
 });
+
+// CREATE Category
 app.post("/createcategory", async (req, res, next) => {
   let connection = await create_connection();
   let [results] = await connection.query(
@@ -334,6 +339,8 @@ app.post("/createcategory", async (req, res, next) => {
     results,
   });
 });
+
+// UPDATE Category
 app.put("/updatecategory", async function (req, res, next) {
   let connection = await create_connection();
   let [rows, err] = await connection.query(
@@ -350,6 +357,8 @@ app.put("/updatecategory", async function (req, res, next) {
     rows,
   });
 });
+
+// DELETE Category
 app.delete("/deletecategory", async function (req, res, next) {
   let connection = await create_connection();
   let [rows, err] = await connection.query(
@@ -363,6 +372,67 @@ app.delete("/deletecategory", async function (req, res, next) {
   return res.json({
     status: "ok",
     message: "Category with category_id : " + id + " is deleted successfully.",
+    rows,
+  });
+});
+
+// CRUD Tags
+app.get("/tags", async function (req, res, next) {
+  let connection = await create_connection();
+  let [rows] = await connection.query("SELECT * FROM `tags`");
+  return res.json(rows);
+});
+app.get("/tags/:tag_id", async function (req, res, next) {
+  let connection = await create_connection();
+  const tag_id = req.params.tag_id;
+  let [rows] = await connection.query(
+    "SELECT * FROM `tags` WHERE `tag_id` = ?",
+    [tag_id]
+  );
+  return res.json(rows[0]);
+});
+app.post("/createtag", async (req, res, next) => {
+  let connection = await create_connection();
+  let [results] = await connection.query(
+    "INSERT IGNORE INTO `tags`(`tag_detail`) VALUES (?)",
+    [req.body.tag_detail]
+  );
+  console.log(results);
+  return res.json({
+    status: "ok",
+    message: "Tag with id : " + results.insertId + " is created successfully.",
+    results,
+  });
+});
+app.put("/updatetag", async function (req, res, next) {
+  let connection = await create_connection();
+  let [rows, err] = await connection.query(
+    "UPDATE `tags` SET `tag_detail`= ? WHERE tag_id = ?",
+    [req.body.tag_detail, req.body.tag_id]
+  );
+  if (err) {
+    res.json({ error: err });
+  }
+  const id = req.body.tag_id;
+  return res.json({
+    status: "ok",
+    message: "Tag with tag_id : " + id + " is updated successfully.",
+    rows,
+  });
+});
+app.delete("/deletetag", async function (req, res, next) {
+  let connection = await create_connection();
+  let [rows, err] = await connection.query(
+    "DELETE FROM `tags` WHERE tag_id = ?",
+    [req.body.tag_id]
+  );
+  if (err) {
+    res.json({ error: err });
+  }
+  const id = req.body.tag_id;
+  return res.json({
+    status: "ok",
+    message: "Tag with tag_id : " + id + " is deleted successfully.",
     rows,
   });
 });
