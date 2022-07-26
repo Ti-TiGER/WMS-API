@@ -305,6 +305,68 @@ app.delete("/deletepd", async function (req, res, next) {
   });
 });
 
+// CRUD Category
+app.get("/category", async function (req, res, next) {
+  let connection = await create_connection();
+  let [rows] = await connection.query("SELECT * FROM `categories`");
+  return res.json(rows);
+});
+app.get("/category/:category_id", async function (req, res, next) {
+  let connection = await create_connection();
+  const category_id = req.params.category_id;
+  let [rows] = await connection.query(
+    "SELECT * FROM `categories` WHERE `category_id` = ?",
+    [category_id]
+  );
+  return res.json(rows[0]);
+});
+app.post("/createcategory", async (req, res, next) => {
+  let connection = await create_connection();
+  let [results] = await connection.query(
+    "INSERT INTO `categories`(`category_name`, `image`) VALUES (?, ?)",
+    [req.body.category_name, req.body.image]
+  );
+  console.log(results);
+  return res.json({
+    status: "ok",
+    message:
+      "Category with id : " + results.insertId + " is created successfully.",
+    results,
+  });
+});
+app.put("/updatecategory", async function (req, res, next) {
+  let connection = await create_connection();
+  let [rows, err] = await connection.query(
+    "UPDATE `categories` SET `category_name`= ?, `image`= ? WHERE category_id = ?",
+    [req.body.category_name, req.body.image, req.body.category_id]
+  );
+  if (err) {
+    res.json({ error: err });
+  }
+  const id = req.body.category_id;
+  return res.json({
+    status: "ok",
+    message: "Category with category_id : " + id + " is updated successfully.",
+    rows,
+  });
+});
+app.delete("/deletecategory", async function (req, res, next) {
+  let connection = await create_connection();
+  let [rows, err] = await connection.query(
+    "DELETE FROM `categories` WHERE category_id = ?",
+    [req.body.category_id]
+  );
+  if (err) {
+    res.json({ error: err });
+  }
+  const id = req.body.category_id;
+  return res.json({
+    status: "ok",
+    message: "Category with category_id : " + id + " is deleted successfully.",
+    rows,
+  });
+});
+
 app.listen(PORT, async () => {
   console.log("CORS-enabled listening on port " + PORT);
 });
