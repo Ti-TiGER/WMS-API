@@ -378,14 +378,6 @@ app.delete("/deletecategory", async function (req, res, next) {
 
 // CRUD Tags
 
-app.get("/counttags", async function (req, res, next) {
-  let connection = await create_connection();
-  let [rows] = await connection.query(
-    "SELECT COUNT (`tag_detail`) FROM `tags`"
-  );
-  return res.json(rows);
-});
-
 // READ ALL Tags
 app.get("/tags", async function (req, res, next) {
   let connection = await create_connection();
