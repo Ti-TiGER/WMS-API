@@ -377,11 +377,22 @@ app.delete("/deletecategory", async function (req, res, next) {
 });
 
 // CRUD Tags
+
+app.get("/counttags", async function (req, res, next) {
+  let connection = await create_connection();
+  let [rows] = await connection.query(
+    "SELECT COUNT (`tag_detail`) FROM `tags`"
+  );
+  return res.json(rows);
+});
+
+// READ ALL Tags
 app.get("/tags", async function (req, res, next) {
   let connection = await create_connection();
   let [rows] = await connection.query("SELECT * FROM `tags`");
   return res.json(rows);
 });
+// READ BY ID
 app.get("/tags/:tag_id", async function (req, res, next) {
   let connection = await create_connection();
   const tag_id = req.params.tag_id;
@@ -391,6 +402,7 @@ app.get("/tags/:tag_id", async function (req, res, next) {
   );
   return res.json(rows[0]);
 });
+// CREATE Tags
 app.post("/createtag", async (req, res, next) => {
   let connection = await create_connection();
   let [results] = await connection.query(
@@ -404,6 +416,7 @@ app.post("/createtag", async (req, res, next) => {
     results,
   });
 });
+// UPDATE Tags
 app.put("/updatetag", async function (req, res, next) {
   let connection = await create_connection();
   let [rows, err] = await connection.query(
@@ -420,6 +433,7 @@ app.put("/updatetag", async function (req, res, next) {
     rows,
   });
 });
+// DELETE Tags
 app.delete("/deletetag", async function (req, res, next) {
   let connection = await create_connection();
   let [rows, err] = await connection.query(
