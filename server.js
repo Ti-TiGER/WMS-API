@@ -413,8 +413,8 @@ app.post("/createtag", async (req, res, next) => {
 app.put("/updatetag", async function (req, res, next) {
   let connection = await create_connection();
   let [rows, err] = await connection.query(
-    "UPDATE `tags` SET `tag_detail`= ? WHERE tag_id = ?",
-    [req.body.tag_detail, req.body.tag_id]
+    "UPDATE `tags` SET `product_id`= ? WHERE tag_id = ?",
+    [req.body.product_id, req.body.tag_id]
   );
   if (err) {
     res.json({ error: err });
