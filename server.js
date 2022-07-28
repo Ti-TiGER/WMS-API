@@ -377,11 +377,12 @@ app.delete("/deletecategory", async function (req, res, next) {
 });
 
 // CRUD Tags
-
 // READ ALL Tags
 app.get("/tags", async function (req, res, next) {
   let connection = await create_connection();
-  let [rows] = await connection.query("SELECT * FROM `tags`");
+  let [rows] = await connection.query(
+    "SELECT * FROM tags LEFT JOIN products ON tags.product_id = products.product_id union SELECT * FROM products RIGHT JOIN tags ON products.product_id = tags.product_id;"
+  );
   return res.json(rows);
 });
 // READ BY ID
