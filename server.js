@@ -386,6 +386,14 @@ app.get("/tags", async function (req, res, next) {
   );
   return res.json(rows);
 });
+
+app.get("/connectedTags", async function (req, res, next) {
+  let connection = await create_connection();
+  let [rows] = await connection.query(
+    "SELECT * FROM tags LEFT JOIN products ON tags.product_id = products.product_id WHERE tags.product_id IS NOT NULL"
+  );
+  return res.json(rows);
+});
 // READ BY ID
 app.get("/tags/:tag_id", async function (req, res, next) {
   let connection = await create_connection();
