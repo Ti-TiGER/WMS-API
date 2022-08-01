@@ -247,6 +247,17 @@ app.get("/pd/:product_id", async function (req, res, next) {
   );
   return res.json(rows[0]);
 });
+
+app.get("/categoriedpd/:category_id", async function (req, res, next) {
+  let connection = await create_connection();
+  const category_id = req.params.category_id;
+  let [rows] = await connection.query(
+    "SELECT * FROM `products` WHERE category_id = ?",
+    [category_id]
+  );
+  return res.json(rows);
+});
+
 app.post("/createpd", async (req, res, next) => {
   let connection = await create_connection();
   let [results] = await connection.query(
