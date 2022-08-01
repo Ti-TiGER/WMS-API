@@ -269,12 +269,13 @@ app.post("/createpd", async (req, res, next) => {
 app.put("/updatepd", async function (req, res, next) {
   let connection = await create_connection();
   let [rows, err] = await connection.query(
-    "UPDATE `products` SET `product_name`= ?, `description`= ?, `product_picture`= ?, `Quantity`= ? WHERE product_id = ?",
+    "UPDATE `products` SET `product_name`= ?, `description`= ?, `product_picture`= ?, `Quantity`= ?,`category_id`= ? WHERE product_id = ?",
     [
       req.body.product_name,
       req.body.description,
       req.body.product_picture,
       req.body.Quantity,
+      req.body.category_id,
       req.body.product_id,
     ]
   );
