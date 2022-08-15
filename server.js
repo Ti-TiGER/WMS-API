@@ -1,10 +1,7 @@
 var express = require("express");
 var cors = require("cors");
 var bodyParser = require("body-parser");
-const fs = require("fs");
-const fastcsv = require("fast-csv");
 const mysql = require("mysql2/promise");
-const { request } = require("express");
 const PORT = process.env.PORT || 5000;
 
 var connection = {};
@@ -314,7 +311,10 @@ app.get("/categorizedpd/:category_id", async function (req, res, next) {
 
 app.get("/sumQuan", async function (req, res, next) {
   let connection = await create_connection();
-  let [rows] = await connection.query("SELECT SUM(Quantity) FROM `products`");
+  let [rows] = await connection.query(
+    "SELECT SUM(`Quantity`) AS TotalQuantity FROM `products`"
+  );
+
   return res.json(rows[0]);
 });
 
