@@ -1,6 +1,8 @@
 var express = require("express");
 var cors = require("cors");
 var bodyParser = require("body-parser");
+const fs = require("fs");
+const fastcsv = require("fast-csv");
 const mysql = require("mysql2/promise");
 const { request } = require("express");
 const PORT = process.env.PORT || 5000;
@@ -9,11 +11,13 @@ var connection = {};
 var app = express();
 var jwt = require("jsonwebtoken");
 var jsonParser = bodyParser.json();
+var fileUpload = require("express-fileupload");
 const secret = "Fullstack Doodeep work";
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
 app.use(cors());
 app.use(express.json());
+app.use(fileUpload());
 
 const create_connection = async () => {
   return await mysql.createConnection({
@@ -53,7 +57,56 @@ const authenticateJWT = (req, res, next) => {
   }
 };
 
-const { body, validationResult } = require("express-validator");
+const convert = function (csvFile) {
+  const convert = (from, to) => (str) => Buffer.from(str, from).toString(to);
+  const hexToUtf8 = convert("hex", "utf8");
+  let csvData = hexToUtf8(csvFile.data).split("\r\n");
+
+  let csvRows = [];
+  csvData.forEach((data) => {
+    csvRows.push(data.split(","));
+  });
+  let data = [];
+  for (let i = 1; i < csvRows.length; ++i) {
+    let dict = {};
+    for (let j = 0; j < csvRows[i].length; ++j) {
+      dict[csvRows[0][j]] = csvRows[i][j];
+    }
+    data.push(dict);
+  }
+  return data;
+};
+
+//! Routes start
+app.post("/tags/file", async (req, res) => {
+  if (!req.files || !req.files.file) {
+    res.status(404).send("File not found");
+  } else if (req.files.file.mimetype === "text/csv") {
+    let csvFile = req.files.file;
+    data = convert(csvFile);
+    console.log(data);
+    results = JSON.stringify(data);
+    try {
+      let connection = await create_connection();
+      let query = "INSERT IGNORE INTO `tags`(`tag_detail`) VALUES (?)";
+      connection.query(query, [results], (error, response) => {
+        console.log(error || response);
+      });
+      return res.json({
+        status: "ok",
+        results,
+      });
+    } catch (err) {
+      res.send(err.message);
+    }
+  } else {
+    res.status(422).send(
+      util.apiResponse(0, toast.INVALID_FILE_FORMAT, {
+        err: "File format is not valid",
+      })
+    );
+  }
+});
 
 app.post("/auth", function (req, res, next) {
   try {
@@ -238,6 +291,7 @@ app.get("/pd", async function (req, res, next) {
   let [rows] = await connection.query("SELECT * FROM `products`");
   return res.json(rows);
 });
+
 app.get("/pd/:product_id", async function (req, res, next) {
   let connection = await create_connection();
   const product_id = req.params.product_id;
@@ -256,6 +310,12 @@ app.get("/categorizedpd/:category_id", async function (req, res, next) {
     [category_id]
   );
   return res.json(rows);
+});
+
+app.get("/sumQuan", async function (req, res, next) {
+  let connection = await create_connection();
+  let [rows] = await connection.query("SELECT SUM(Quantity) FROM `products`");
+  return res.json(rows[0]);
 });
 
 app.post("/createpd", async (req, res, next) => {
@@ -409,7 +469,7 @@ app.get("/connectedTags", async function (req, res, next) {
 app.get("/tags/:tag_id", async function (req, res, next) {
   let connection = await create_connection();
   const tag_id = req.params.tag_id;
-  let [rows] = await connection.query(
+  let [rows] = await connection.execute(
     "SELECT * FROM `tags` WHERE `tag_id` = ?",
     [tag_id]
   );
