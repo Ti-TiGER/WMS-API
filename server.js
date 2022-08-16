@@ -206,6 +206,13 @@ app.post("/login", jsonParser, async function (req, res, next) {
 });
 
 // CRUD user in database
+
+app.get("/roles", async function (req, res, next) {
+  let connection = await create_connection();
+  let [rows] = await connection.query("SELECT * FROM `roles`");
+  return res.json(rows);
+});
+
 app.get("/users", async function (req, res, next) {
   let connection = await create_connection();
   let [rows] = await connection.query("SELECT * FROM `users`");
