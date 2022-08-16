@@ -215,7 +215,9 @@ app.get("/roles", async function (req, res, next) {
 
 app.get("/users", async function (req, res, next) {
   let connection = await create_connection();
-  let [rows] = await connection.query("SELECT * FROM `users`");
+  let [rows] = await connection.query(
+    "SELECT * FROM users LEFT JOIN roles ON users.role_id = roles.role_id"
+  );
   return res.json(rows);
 });
 app.get("/users/:user_id", async function (req, res, next) {
