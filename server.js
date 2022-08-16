@@ -253,7 +253,7 @@ app.post("/create", async (req, res, next) => {
 app.put("/update", async function (req, res, next) {
   let connection = await create_connection();
   let [rows, err] = await connection.query(
-    "UPDATE `users` SET `fname`= ?, `lname`= ?, `email`= ?, `password`= ?, `avatar`= ?, `contact`= ? WHERE user_id = ?",
+    "UPDATE `users` SET `fname`= ?, `lname`= ?, `email`= ?, `password`= ?, `avatar`= ?, `contact`= ?, `role_id`= ? WHERE user_id = ?",
     [
       req.body.fname,
       req.body.lname,
@@ -261,6 +261,7 @@ app.put("/update", async function (req, res, next) {
       req.body.password,
       req.body.avatar,
       req.body.contact,
+      req.body.role_id,
       req.body.user_id,
     ]
   );
