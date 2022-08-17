@@ -18,11 +18,11 @@ app.use(fileUpload());
 
 const create_connection = async () => {
   return await mysql.createConnection({
-    host: "lcpbq9az4jklobvq.cbetxkdyhwsb.us-east-1.rds.amazonaws.com",
-    port: "3306",
-    user: "wwz7nngvxb09lek6",
-    password: "bqnch71ghg5ivpe3",
-    database: "rjz14gilfzn22wr9",
+    host: "wms-mysql-do-user-12101624-0.b.db.ondigitalocean.com",
+    port: "25060",
+    user: "doadmin",
+    password: "AVNS_XTu8oXNKI0SXmK7I8-e",
+    database: "defaultdb",
   });
 };
 
