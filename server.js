@@ -81,12 +81,19 @@ app.post("/tags/file", async (req, res) => {
   } else if (req.files.file.mimetype === "text/csv") {
     let csvFile = req.files.file;
     data = convert(csvFile);
-    console.log(data);
-    results = JSON.stringify(data);
+    var values = "";
+
+    for (let d of data) {
+      values = values + "('" + d.tag_detail + "'),";
+      console.log(d.tag_detail);
+    }
+    values = values.slice(0, -1);
+    console.log(values);
     try {
       let connection = await create_connection();
-      let query = "INSERT IGNORE INTO `tags`(`tag_detail`) VALUES (?)";
-      connection.query(query, [results], (error, response) => {
+      let query = "INSERT IGNORE INTO `tags`(`tag_detail`) VALUES" + values;
+      connection.query(query, [], (error, response) => {
+        if (error) throw error;
         console.log(error || response);
       });
       return res.json({
