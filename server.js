@@ -82,7 +82,6 @@ app.post("/tags/file", async (req, res) => {
     let csvFile = req.files.file;
     data = convert(csvFile);
     var values = "";
-
     for (let d of data) {
       values = values + "('" + d.tag_detail + "'),";
       console.log(d.tag_detail);
@@ -98,7 +97,7 @@ app.post("/tags/file", async (req, res) => {
       });
       return res.json({
         status: "ok",
-        results,
+        values,
       });
     } catch (err) {
       res.send(err.message);
@@ -523,6 +522,23 @@ app.put("/updatetag", async function (req, res, next) {
     rows,
   });
 });
+// UPDATE Multiple Tags
+app.put("/updateMultag", async function (req, res, next) {
+  let connection = await create_connection({ multipleStatements: true });
+  let [rows, err] = await connection.query(
+    "UPDATE `tags` SET `product_id`= ? WHERE tag_id = ?",
+    [req.body.product_id, req.body.tag_id]
+  );
+  if (err) {
+    res.json({ error: err });
+  }
+  const id = req.body.tag_id;
+  return res.json({
+    status: "ok",
+    message: "Tag with tag_id : " + id + " is updated successfully.",
+    rows,
+  });
+});
 // DELETE Tags
 app.delete("/deletetag", async function (req, res, next) {
   let connection = await create_connection();
@@ -538,6 +554,21 @@ app.delete("/deletetag", async function (req, res, next) {
     status: "ok",
     message: "Tag with tag_id : " + id + " is deleted successfully.",
     rows,
+  });
+});
+// DELETE Multiple Tags
+app.delete("/deleteMultag", async function (req, res, next) {
+  var data = req.body;
+  let connection = await create_connection();
+  let query = "DELETE FROM tags WHERE tag_id IN (?)";
+  connection.query(query, [data], (error, results) => {
+    if (error) throw error;
+    console.log(error || results);
+  });
+  const id = req.body.tag_id;
+  return res.json({
+    status: "ok",
+    message: "Tag with tag_id : " + id + " is deleted successfully.",
   });
 });
 
