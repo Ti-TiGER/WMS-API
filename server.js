@@ -565,7 +565,9 @@ app.delete("/deleteMultag", async function (req, res, next) {
     if (error) throw error;
     console.log(error || results);
   });
-  const id = req.body.tag_id;
+  console.log(data);
+  console.log(query);
+  const id = req.body;
   return res.json({
     status: "ok",
     message: "Tag with tag_id : " + id + " is deleted successfully.",
