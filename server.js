@@ -491,6 +491,18 @@ app.get("/tags/:tag_id", async function (req, res, next) {
   );
   return res.json(rows[0]);
 });
+// READ BY Multi tagID
+app.get("/Multags/:tag_id", async function (req, res, next) {
+  let connection = await create_connection();
+  const tag_id = req.params.tag_id;
+  var values = "";
+  values = values + "(" + tag_id + ")";
+  console.log(values);
+  let [rows] = await connection.execute(
+    "SELECT * FROM `tags` WHERE tag_id IN " + values
+  );
+  return res.json(rows);
+});
 // CREATE Tags
 app.post("/createtag", async (req, res, next) => {
   let connection = await create_connection();
