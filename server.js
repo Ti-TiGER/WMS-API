@@ -559,13 +559,17 @@ app.delete("/deletetag", async function (req, res, next) {
 // DELETE Multiple Tags
 app.delete("/deleteMultag", async function (req, res, next) {
   var data = req.body;
+  var values = "";
+  values = values + "(" + data + ")";
+  console.log(values);
+
   let connection = await create_connection();
-  let query = "DELETE FROM tags WHERE tag_id IN (?)";
-  connection.query(query, [data], (error, results) => {
+  let query = "DELETE FROM tags WHERE tag_id IN " + values;
+  connection.query(query, [], (error, results) => {
     if (error) throw error;
     console.log(error || results);
   });
-  console.log(data);
+
   console.log(query);
   const id = req.body;
   return res.json({
