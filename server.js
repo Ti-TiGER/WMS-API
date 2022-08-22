@@ -524,20 +524,35 @@ app.put("/updatetag", async function (req, res, next) {
 });
 // UPDATE Multiple Tags
 app.put("/updateMultag", async function (req, res, next) {
-  let connection = await create_connection({ multipleStatements: true });
-  let [rows, err] = await connection.query(
-    "UPDATE `tags` SET `product_id`= ? WHERE tag_id = ?",
-    [req.body.product_id, req.body.tag_id]
+  const tag = req.body.tag_id;
+  var values = "";
+  values = values + "(" + tag + ")";
+  console.log(values);
+  let connection = await create_connection();
+
+  let query = "UPDATE `tags` SET `product_id`= ? WHERE tag_id IN " + values;
+  let [rows] = await connection.query(
+    query,
+    [req.body.product_id],
+    (error, results) => {
+      if (error) throw error;
+      console.log(error || results);
+    }
   );
-  if (err) {
-    res.json({ error: err });
+
+  if (rows.affectedRows == 0) {
+    return res.json({
+      status: "error",
+      message: "Tag with tag_id : " + tag + " isn't updated.",
+      rows,
+    });
+  } else {
+    return res.json({
+      status: "ok",
+      message: "Tag with tag_id : " + tag + " is updated successfully.",
+      rows,
+    });
   }
-  const id = req.body.tag_id;
-  return res.json({
-    status: "ok",
-    message: "Tag with tag_id : " + id + " is updated successfully.",
-    rows,
-  });
 });
 // DELETE Tags
 app.delete("/deletetag", async function (req, res, next) {
@@ -556,26 +571,37 @@ app.delete("/deletetag", async function (req, res, next) {
     rows,
   });
 });
+
 // DELETE Multiple Tags
 app.delete("/deleteMultag", async function (req, res, next) {
   var data = req.body;
+  console.log(data);
   var values = "";
   values = values + "(" + data + ")";
   console.log(values);
 
   let connection = await create_connection();
   let query = "DELETE FROM tags WHERE tag_id IN " + values;
-  connection.query(query, [], (error, results) => {
+  let [rows] = await connection.query(query, [], (error, results) => {
     if (error) throw error;
     console.log(error || results);
   });
 
   console.log(query);
   const id = req.body;
-  return res.json({
-    status: "ok",
-    message: "Tag with tag_id : " + id + " is deleted successfully.",
-  });
+  if (rows.affectedRows == 0) {
+    return res.json({
+      status: "error",
+      message: "Tag with tag_id : " + id + " isn't delete.",
+      rows,
+    });
+  } else if (rows.affectedRows == 1) {
+    return res.json({
+      status: "ok",
+      message: "Tag with tag_id : " + id + " is deleted successfully.",
+      rows,
+    });
+  }
 });
 
 app.listen(PORT, async () => {
