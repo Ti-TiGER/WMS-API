@@ -145,9 +145,17 @@ app.post("/auth/users", authenticateJWT, (req, res) => {
 
 app.post("/register", jsonParser, async (req, res, next) => {
   let connection = await create_connection();
-  let [rows] = await connection.execute(
-    'SELECT email FROM users WHERE email ="' + req.body.email + '"'
-  );
+
+  var email = req.body.email;
+  var values = "";
+  values = values + "'" + email + "'";
+
+  let query = "SELECT email FROM users WHERE email = " + values;
+  let [rows] = await connection.query(query, [], (error, results) => {
+    if (error) throw error;
+    console.log(error || results);
+  });
+  console.log(query);
   if (rows.length > 0) {
     return res.json({
       status: "registered",
