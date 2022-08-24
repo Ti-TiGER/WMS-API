@@ -289,6 +289,36 @@ app.put("/update", async function (req, res, next) {
     rows,
   });
 });
+
+app.put("/updateProfile", async function (req, res, next) {
+  let connection = await create_connection();
+  let [rows, err] = await connection.query(
+    "UPDATE `users` SET `fname`= ?, `lname`= ?, `avatar`= ?, `contact`= ? WHERE user_id = ?",
+    [
+      req.body.fname,
+      req.body.lname,
+      req.body.avatar,
+      req.body.contact,
+      req.body.user_id,
+    ]
+  );
+  if (err) {
+    res.json({ error: err });
+  }
+  const id = req.body.user_id;
+  if (rows.affectedRows == 1) {
+    return res.json({
+      status: "ok",
+      message: "User with USER_ID : " + id + " is updated successfully.",
+      rows,
+    });
+  } else {
+    return res.json({
+      error: "User with USER_ID : " + id + " is not updated successfully.",
+      err,
+    });
+  }
+});
 app.delete("/delete", async function (req, res, next) {
   let connection = await create_connection();
   let [rows, err] = await connection.query(
