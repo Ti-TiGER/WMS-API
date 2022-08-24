@@ -238,7 +238,7 @@ app.get("/users/:user_id", async function (req, res, next) {
   let connection = await create_connection();
   const user_id = req.params.user_id;
   let [rows] = await connection.query(
-    "SELECT * FROM `users` WHERE `user_id` = ?",
+    "SELECT * FROM `users` LEFT JOIN roles ON users.role_id = roles.role_id WHERE `user_id` = ?",
     [user_id]
   );
   return res.json(rows[0]);
